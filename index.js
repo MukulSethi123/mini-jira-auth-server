@@ -25,8 +25,6 @@ const authCollectionRef = db.collection("Auth");
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const payload = createJWTPayload();
-
   try {
     const userDocument = await getSpecificDoument(authCollectionRef, email);
     if (userDocument === null) {
@@ -34,21 +32,39 @@ app.post("/login", async (req, res) => {
       throw new Error("user not found");
     }
     if (userDocument.password === password) {
+      const payload = createJWTPayload();
       const token = jwt.sign(payload, secretKey, { algorithm: "HS256" });
       res.status(200).send({ ...userDocument, authToken: token });
     } else {
       res.status(403).send("Wrong password");
     }
   } catch (e) {
-    console.log(e);
+    console.log(e.message);
   }
 });
 
-app.post("/sign-up", (req, res) => {
-  // 1. check if email id is in correct format
-  // 2. check if password is strong
-  // 3. login user and generate auth token
-  // 4. send user details back
+app.post("/sign-up", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const userDocument = await getSpecificDoument(authCollectionRef, email);
+    if (userDocument) {
+      res.status(403).send("user already exsists");
+      throw new Error("user already exsists");
+    }
+    const payload = createJWTPayload();
+    const token = jwt.sign(payload, secretKey, { algorithm: "HS256" });
+    const signUpSuccess = await authCollectionRef
+      .doc(email)
+      .set({ password: password });
+
+    if (!signUpSuccess) {
+      res.status(500).send("failed to create user");
+      throw new Error("couldnt createUser");
+    }
+    res.status(200).send({ authToken: token });
+  } catch (e) {
+    console.log(e.message);
+  }
 });
 app.listen(PORT, () => {
   console.log("running on port 3070 ");
