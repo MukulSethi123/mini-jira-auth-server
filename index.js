@@ -6,12 +6,14 @@ const createJWTPayload = require("./jwtHelpers");
 var serviceAccount = require("./mini-jira-auth-server-firebase-adminsdk-tbwqs-183caabe71.json");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const cors = require("cors");
 
 // Generate a random 256-bit key (32 bytes)
 const secretKey = crypto.randomBytes(32).toString("hex");
 
 const PORT = 3070;
 app = express();
+app.use(cors());
 app.use(express.json());
 
 // Initialize Firebase
